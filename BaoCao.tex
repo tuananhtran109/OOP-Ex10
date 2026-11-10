@@ -1,0 +1,356 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[a4paper,left=2.0cm,right=2.0cm,top=2.0cm,bottom=2.0cm]{geometry}
+\usepackage{fontspec}
+\usepackage[vietnamese]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc}
+
+\setlist{nosep, leftmargin=1.4em, topsep=1pt, partopsep=0pt}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+\begin{document}
+
+\begin{center}
+    {\LARGE \textbf{BÁO CÁO THỰC HÀNH OOP - TUẦN 10}}\\[0.15cm]
+    {\large \textbf{Chủ đề: Áp Dụng Design Patterns Trong Hệ Thống Smart Home Mini}}\\[0.25cm]
+    \textbf{MSSV: 202418834 \quad Họ tên: Trần Tuấn Anh}\\[0.15cm]
+    \today
+\end{center}
+
+\vspace{-0.1cm}
+
+\section{Link Github - Mã nguồn}
+Kho lưu trữ mã nguồn đầy đủ trên Github: \url{https://github.com/tuananhtran109/OOP-Week10}
+
+\section{Phân tích yêu cầu và Thiết kế kiến trúc Smart Home Mini}
+
+\subsection{Bối cảnh bài toán và Yêu cầu nghiệp vụ}
+Hệ thống \textbf{Smart Home Mini} có nhiệm vụ điều khiển và tự động hóa các thiết bị trong ngôi nhà thông minh với 3 chủng loại thiết bị phần cứng ban đầu:
+\begin{itemize}[itemsep=1.0pt]
+    \item \textbf{Đèn thông minh (\texttt{SmartLight}):} Hỗ trợ thao tác bật (\texttt{TurnOn}) và tắt (\texttt{TurnOff}).
+    \item \textbf{Quạt thông minh (\texttt{SmartFan}):} Hỗ trợ thao tác bật (\texttt{TurnOn}) và tắt (\texttt{TurnOff}).
+    \item \textbf{Cửa thông minh (\texttt{SmartDoor}):} Hỗ trợ thao tác bật/mở (\texttt{TurnOn}), tắt/đóng (\texttt{TurnOff}) và bổ sung chức năng khóa (\texttt{Lock}) và mở khóa an ninh (\texttt{Unlock}).
+\end{itemize}
+
+Các yêu cầu kiến trúc trọng yếu bao gồm:
+\begin{enumerate}[itemsep=1.2pt]
+    \item \textbf{Khởi tạo thiết bị linh hoạt:} Client không được gọi trực tiếp constructor của các lớp cụ thể mà thông qua tên chuỗi định danh do người dùng chọn (không phân biệt chữ hoa/thường).
+    \item \textbf{Cấu hình thống nhất toàn cục:} Thông số cài đặt ngôi nhà (tên nhà, độ sáng đèn ngủ ban đêm) chỉ được phép tồn tại đúng \textbf{một thể hiện duy nhất} trong suốt phiên làm việc.
+    \item \textbf{Điều khiển ngữ cảnh mức cao:} Cung cấp các chế độ tiện ích tích hợp như \textbf{Đi làm (\texttt{GoToWork})} và \textbf{Đi ngủ (\texttt{GoToSleep})} để người dùng không phải tương tác thủ công với từng thiết bị riêng lẻ.
+    \item \textbf{Nguyên lý Abstraction và Độc lập phụ thuộc:} Phía Client làm việc chủ yếu qua các giao diện trừu tượng (\texttt{IDevice}, \texttt{ILockable}) thay vì gắn chặt vào các lớp cụ thể.
+\end{enumerate}
+
+\subsection{Phân tích trừu tượng hóa và Nguyên lý ISP}
+\begin{itemize}[itemsep=1.2pt]
+    \item \textbf{Abstraction chung của thiết bị (\texttt{IDevice}):} Đại diện cho mọi thiết bị thông minh cơ bản có thể bật/tắt điện năng nguồn.
+    \item \textbf{Hành vi an ninh của cửa (\texttt{ILockable}):} Hành vi \texttt{Lock()} và \texttt{Unlock()} được phân tách sang giao diện riêng biệt \texttt{ILockable}.
+    \item \textbf{Tuân thủ Interface Segregation Principle (ISP):} Đèn và quạt hoàn toàn không có khả năng chốt khóa an ninh cơ học. Nếu đưa trực tiếp \texttt{Lock()} vào \texttt{IDevice}, hai lớp \texttt{SmartLight} và \texttt{SmartFan} sẽ bị ép buộc phải cài đặt một phương thức vô nghĩa (ném \texttt{NotSupportedException} hoặc để trống), vi phạm nguyên lý ISP. Việc tách rời \texttt{ILockable} giúp thiết kế trong sáng, các lớp chỉ phụ thuộc vào những gì chúng thực sự sử dụng.
+\end{itemize}
+
+\newpage
+
+\section{Danh sách lớp và sơ đồ quan hệ}
+
+\subsection{Sơ đồ lớp UML (Class Diagram)}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    scale=0.82, transform shape,
+    interfacebox/.style={draw=black!75, fill=yellow!12, thick, rounded corners=2pt, font=\scriptsize, align=left, inner sep=4pt, text width=4.8cm},
+    devicebox/.style={draw=black!75, fill=blue!5, thick, rounded corners=2pt, font=\scriptsize, align=left, inner sep=4pt, text width=4.8cm},
+    patternbox/.style={draw=black!75, fill=green!7, thick, rounded corners=2pt, font=\scriptsize, align=left, inner sep=4pt, text width=5.9cm},
+    inher/.style={-{Triangle[open, fill=white, length=3.0mm, width=2.4mm]}, thick, dashed},
+    assoc/.style={-{Stealth[length=2.5mm]}, thick},
+    dep/.style={-{Stealth[length=2.5mm]}, dashed, thick}
+]
+
+% ==================== INTERFACES (HÀNG GIỮA) ====================
+\node[interfacebox] (idevice) at (-3.5, 5.0) {
+    \centering \textbf{«interface»\\[1pt] IDevice}\\[2pt]
+    \rule{\linewidth}{0.3pt}\\[2pt]
+    + TurnOn(): void\\
+    + TurnOff(): void
+};
+
+\node[interfacebox] (ilockable) at (3.5, 5.0) {
+    \centering \textbf{«interface»\\[1pt] ILockable}\\[2pt]
+    \rule{\linewidth}{0.3pt}\\[2pt]
+    + Lock(): void\\
+    + Unlock(): void
+};
+
+% ==================== CONCRETE DEVICES (HÀNG DƯỚI CÙNG) ====================
+\node[devicebox] (light) at (-5.8, 1.0) {
+    \centering \textbf{SmartLight}\\[2pt]
+    \rule{\linewidth}{0.3pt}\\[2pt]
+    + Name: string \{ get; \}\\[2pt]
+    \rule{\linewidth}{0.3pt}\\[2pt]
+    + SmartLight(name: string)\\
+    + TurnOn(): void\\
+    + TurnOff(): void
+};
+
+\node[devicebox] (fan) at (0.0, 1.0) {
+    \centering \textbf{SmartFan}\\[2pt]
+    \rule{\linewidth}{0.3pt}\\[2pt]
+    + Name: string \{ get; \}\\[2pt]
+    \rule{\linewidth}{0.3pt}\\[2pt]
+    + SmartFan(name: string)\\
+    + TurnOn(): void\\
+    + TurnOff(): void
+};
+
+\node[devicebox] (door) at (5.8, 0.7) {
+    \centering \textbf{SmartDoor}\\[2pt]
+    \rule{\linewidth}{0.3pt}\\[2pt]
+    + Name: string \{ get; \}\\[2pt]
+    \rule{\linewidth}{0.3pt}\\[2pt]
+    + SmartDoor(name: string)\\
+    + TurnOn(): void\\
+    + TurnOff(): void\\
+    + Lock(): void\\
+    + Unlock(): void
+};
+
+% ==================== DESIGN PATTERN CLASSES (HÀNG TRÊN) ====================
+\node[patternbox] (factory) at (-5.9, 9.2) {
+    \centering \textbf{«static»\\[1pt] DeviceFactory}\\[1pt]
+    \textit{\tiny (Factory Pattern)}\\[2pt]
+    \rule{\linewidth}{0.3pt}\\[2pt]
+    + Create(type: string, name: string): IDevice
+};
+
+\node[patternbox] (facade) at (0.3, 9.2) {
+    \centering \textbf{«sealed»\\[1pt] SmartHomeFacade}\\[1pt]
+    \textit{\tiny (Facade Pattern)}\\[2pt]
+    \rule{\linewidth}{0.3pt}\\[2pt]
+    - light: IDevice\\
+    - fan: IDevice\\
+    - door: ILockable\\[2pt]
+    \rule{\linewidth}{0.3pt}\\[2pt]
+    + SmartHomeFacade(light, fan, door)\\
+    + GoToWork(): void\\
+    + GoToSleep(): void
+};
+
+\node[patternbox] (config) at (6.5, 9.2) {
+    \centering \textbf{«sealed»\\[1pt] HomeConfiguration}\\[1pt]
+    \textit{\tiny (Singleton Pattern)}\\[2pt]
+    \rule{\linewidth}{0.3pt}\\[2pt]
+    - lazy: Lazy\textless HomeConfiguration\textgreater\ (static)\\
+    + Instance: HomeConfiguration (static)\\
+    + HomeName: string \{ get; set; \}\\
+    + NightLightLevel: int \{ get; set; \}\\[2pt]
+    \rule{\linewidth}{0.3pt}\\[2pt]
+    - HomeConfiguration()
+};
+
+% ==================== QUAN HỆ KẾ THỪA / THỰC THI (INHERITANCE / REALIZATION) ====================
+% SmartLight -> IDevice
+\draw[inher] (light.north) |- (-3.5, 3.2) -- (idevice.south);
+
+% SmartFan -> IDevice
+\draw[inher] (fan.north) |- (-3.5, 3.2);
+
+% SmartDoor -> IDevice và ILockable
+\draw[inher] (door.north) |- (-3.5, 3.2);
+\draw[inher] (door.north) -- (door.north |- ilockable.south) -- (ilockable.south);
+
+% ==================== QUAN HỆ PHỤ THUỘC & KẾT HỢP (DEPENDENCY & ASSOCIATION) ====================
+% Factory -> IDevice (Tạo ra IDevice)
+\draw[dep] (factory.south) -- (factory.south |- idevice.north) 
+    node[midway, left, font=\scriptsize] {«creates»};
+
+% Facade -> IDevice và ILockable (Association)
+\draw[assoc] (facade.south) -- ++(-1.1, -1.8) -| (idevice.north)
+    node[pos=0.25, left, font=\tiny] {aggregates};
+\draw[assoc] (facade.south) -- ++(1.1, -1.8) -| (ilockable.north)
+    node[pos=0.25, right, font=\tiny] {aggregates};
+
+% Facade -> HomeConfiguration (Sử dụng mức sáng đèn ngủ)
+\draw[dep] (facade.east) -- (config.west)
+    node[midway, above, font=\tiny] {«uses»};
+
+\end{tikzpicture}
+\caption{Sơ đồ lớp UML (Class Diagram) hệ thống Smart Home Mini với 3 Design Pattern}
+\label{fig:class_diagram}
+\end{figure}
+
+\subsection{Danh sách các lớp, giao diện và vai trò kiến trúc}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{>{\raggedright\arraybackslash}p{3.4cm}p{2.2cm}p{9.4cm}}
+\toprule
+\textbf{Tên Lớp / Giao diện} & \textbf{Phân loại} & \textbf{Vai trò và trách nhiệm trong hệ thống} \\
+\midrule
+\texttt{\small IDevice} & Interface & Hợp đồng trừu tượng cơ bản đại diện cho mọi thiết bị thông minh; định nghĩa 2 phương thức điều khiển nguồn \texttt{TurnOn()} và \texttt{TurnOff()}. \\
+\texttt{\small ILockable} & Interface & Hợp đồng trừu tượng an ninh; định nghĩa hành vi khóa cơ học \texttt{Lock()} và mở khóa \texttt{Unlock()} cho các thiết bị an ninh như cửa. \\
+\texttt{\small SmartLight} & Concrete Class & Thiết bị Đèn thông minh cụ thể; triển khai \texttt{IDevice}; quản lý tên riêng và trạng thái chiếu sáng ra màn hình. \\
+\texttt{\small SmartFan} & Concrete Class & Thiết bị Quạt thông minh cụ thể; triển khai \texttt{IDevice}; quản lý tên riêng và trạng thái vận hành ra màn hình. \\
+\texttt{\small SmartDoor} & Concrete Class & Thiết bị Cửa thông minh cụ thể; đồng thời triển khai cả 2 giao diện \texttt{IDevice} và \texttt{ILockable}; quản lý trạng thái đóng/mở và khóa chốt. \\
+\texttt{\small DeviceFactory} & Static Class & Triển khai \textbf{Simple Factory Pattern}; đóng gói quy trình khởi tạo đối tượng dựa trên chuỗi định danh; chuẩn hóa chuỗi và ném ngoại lệ nếu loại không hợp lệ. \\
+\texttt{\small HomeConfiguration} & Sealed Class & Triển khai \textbf{Singleton Pattern}; quản lý cấu hình tập trung duy nhất bằng \texttt{Lazy<T>}; an toàn đa luồng (thread-safe); ngăn chặn kế thừa và gọi hàm tạo từ bên ngoài. \\
+\texttt{\small SmartHomeFacade} & Sealed Class & Triển khai \textbf{Facade Pattern}; đóng gói các tương tác phức tạp đa thiết bị thành các thao tác cấp cao tiện ích \texttt{GoToWork()} và \texttt{GoToSleep()}. \\
+\texttt{\small Program} & Client / Test & Điểm khởi chạy hệ thống; đóng vai trò Client sử dụng các abstraction, đồng thời chứa kịch bản kiểm thử tự động 5 ca kiểm thử chuẩn (T1 -- T5). \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+\section{Phân tích chuyên sâu 3 Design Pattern}
+
+\subsection{1. Mẫu Factory (Simple Factory Pattern) trong \texttt{DeviceFactory}}
+\begin{itemize}[itemsep=1.2pt]
+    \item \textbf{Vị trí sử dụng:} Lớp tĩnh \texttt{DeviceFactory.Create(string type, string name)} trả về kiểu trừu tượng \texttt{IDevice}.
+    \item \textbf{Quyết định thiết kế được che giấu đối với Client:} Client hoàn toàn không biết đến các lớp cụ thể \texttt{SmartLight}, \texttt{SmartFan}, \texttt{SmartDoor}, không cần nắm bắt cú pháp cấp phát bộ nhớ \texttt{new} hay cấu trúc khởi tạo nội bộ của từng thiết bị. Client chỉ cần truyền vào chuỗi định danh ("light", "fan", "door") và tiếp nhận tham chiếu \texttt{IDevice}.
+    \item \textbf{Khả năng mở rộng khi thêm \texttt{SmartCamera}:}
+    \begin{enumerate}[itemsep=1.0pt]
+        \item Khai báo lớp mới \texttt{public class SmartCamera : IDevice} (có thể kèm interface an ninh ghi hình \texttt{IRecordable} nếu cần).
+        \item Cập nhật thêm một nhánh mới trong biểu thức \texttt{switch} của \texttt{DeviceFactory}:\\
+        \texttt{"camera" $\Rightarrow$ new SmartCamera(name)}.
+        \item \textbf{Lợi ích:} Mã nguồn của tất cả Client đang sử dụng Factory không hề bị ảnh hưởng hay phải biên dịch lại.
+    \end{enumerate}
+    \item \textbf{Hạn chế của thiết kế:} Khi số lượng thiết bị phần cứng tăng lên nhiều, lớp \texttt{DeviceFactory} phải liên tục sửa đổi nội dung hàm \texttt{Create}, vi phạm một phần nguyên lý \textit{Open/Closed Principle (OCP)}. Để giải quyết triệt để trong thực tế, có thể nâng cấp lên \textit{Factory Method}, \textit{Abstract Factory} hoặc cơ chế đăng ký tự động qua Reflection / DI Container.
+\end{itemize}
+
+\subsection{2. Mẫu Singleton trong \texttt{HomeConfiguration}}
+\begin{itemize}[itemsep=1.2pt]
+    \item \textbf{Vị trí sử dụng:} Thuộc tính tĩnh \texttt{HomeConfiguration.Instance}.
+    \item \textbf{Cơ chế an toàn luồng và Khởi tạo lười (Thread-Safe Lazy Initialization):}
+    Sử dụng \texttt{Lazy\textless HomeConfiguration\textgreater} của .NET:
+    \begin{quote}
+    \texttt{private static readonly Lazy\textless HomeConfiguration\textgreater\ lazy =}\\
+    \hspace*{0.5cm}\texttt{new(() $\Rightarrow$ new HomeConfiguration());}\\[2pt]
+    \texttt{public static HomeConfiguration Instance $\Rightarrow$ lazy.Value;}
+    \end{quote}
+    Đối tượng chỉ được tạo ra ở thời điểm đầu tiên thuộc tính \texttt{Instance} được truy cập. Mặc định \texttt{LazyThreadSafetyMode.ExecutionAndPublication} đảm bảo chỉ có duy nhất một thread được quyền khởi tạo đối tượng, loại bỏ hoàn toàn hiện tượng tranh chấp (Race Condition).
+    \item \textbf{Mức truy cập constructor và từ khóa \texttt{sealed}:}
+    \begin{itemize}[itemsep=1.0pt]
+        \item Constructor bắt buộc phải là \texttt{private} để vô hiệu hóa hoàn toàn toán tử \texttt{new} từ bất kỳ nơi nào ngoài phạm vi lớp.
+        \item Đánh dấu \texttt{sealed} để ngăn cấm việc kế thừa. Nếu cho phép lớp khác kế thừa, lớp con có thể công khai constructor riêng hoặc can thiệp vào vòng đời, làm phá vỡ tính duy nhất thể hiện.
+    \end{itemize}
+    \item \textbf{Rủi ro và Thách thức đối với Unit Test:}
+    Singleton biến dữ liệu cấu hình thành \textbf{Trạng thái dùng chung toàn cục (Global Shared State)}. Khi thực hiện Unit Test, một ca kiểm thử sửa đổi giá trị (như thay đổi \texttt{NightLightLevel}) sẽ trực tiếp làm thay đổi môi trường của các ca kiểm thử kế tiếp. Việc này gây hiệu ứng phụ (side effects), phá vỡ tính độc lập và khả năng chạy song song của các test runner.
+    \item \textbf{So sánh với .NET Dependency Injection (\texttt{AddSingleton}):}
+    Khi sử dụng .NET DI Container, vòng đời đối tượng được quản lý tập trung thông qua container (\texttt{services.AddSingleton\textless IHomeConfig, HomeConfig\textgreater()}). Lớp cấu hình không cần phải tự cài đặt cấu trúc Singleton phức tạp, constructor vẫn để \texttt{public} và có thể kế thừa từ Interface. Điều này giúp mã nguồn dễ viết Unit Test (dễ Mock/Stub) và linh hoạt hơn rất nhiều.
+\end{itemize}
+
+\subsection{3. Mẫu Facade trong \texttt{SmartHomeFacade}}
+\begin{itemize}[itemsep=1.2pt]
+    \item \textbf{Vị trí sử dụng:} Lớp \texttt{SmartHomeFacade} với 2 kịch bản điều khiển \texttt{GoToWork()} và \texttt{GoToSleep()}.
+    \item \textbf{Sự khác biệt bản chất giữa Facade và Factory:}
+    \begin{itemize}[itemsep=1.0pt]
+        \item \textbf{Factory (Creational Pattern):} Tập trung vào khâu \textbf{tạo lập đối tượng}. Trả lời câu hỏi: \textit{"Làm thế nào để tạo ra đối tượng đúng loại mà không phụ thuộc vào lớp cụ thể?"}.
+        \item \textbf{Facade (Structural Pattern):} Tập trung vào khâu \textbf{tương tác và giao diện sử dụng}. Trả lời câu hỏi: \textit{"Làm thế nào để đóng gói nhiều thao tác của các đối tượng đã tồn tại thành một giao diện đơn giản, dễ dùng?"}.
+    \end{itemize}
+    \item \textbf{Hệ quả nếu không sử dụng Facade:}
+    Client sẽ phải tự quản lý từng tham chiếu thiết bị, phải ghi nhớ chính xác trình tự kích hoạt (ví dụ khi ngủ: tắt quạt $\rightarrow$ khóa cửa $\rightarrow$ bật đèn $\rightarrow$ lấy mức sáng từ cấu hình và áp dụng). Khi có sự thay đổi kịch bản (ví dụ bổ sung cảm biến an ninh), toàn bộ mã nguồn Client sẽ phải sửa đổi.
+    \item \textbf{Tính bảo toàn tính năng riêng lẻ:} Facade không thay thế hay nuốt mất thiết bị. Client vẫn hoàn toàn có thể điều khiển độc lập từng thiết bị (bật riêng đèn, chỉnh quạt) khi có nhu cầu.
+\end{itemize}
+
+\newpage
+
+\section{Kết quả chạy và Kiểm thử hệ thống}
+
+\subsection{Bảng tổng hợp kết quả kiểm thử tự động (T1 -- T5)}
+Chương trình đã xây dựng kịch bản kiểm thử độc lập cho cả 3 Design Pattern, tự động đối soát kết quả:
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.20}
+\begin{tabular}{cp{3.8cm}p{4.5cm}p{4.6cm}c}
+\toprule
+\textbf{Mã} & \textbf{Tình huống kiểm thử} & \textbf{Kết quả mong đợi} & \textbf{Kết quả thực tế ghi nhận} & \textbf{Trạng thái} \\
+\midrule
+\textbf{T1} & Tạo thiết bị qua Factory với các chuỗi "light", "fan", "door" & Factory trả về đúng kiểu đối tượng \texttt{SmartLight}, \texttt{SmartFan}, \texttt{SmartDoor} & Trả về chính xác kiểu đối tượng tương ứng, gán được vào \texttt{IDevice} & \textbf{PASS} \\
+\midrule
+\textbf{T2} & Tạo loại thiết bị chưa hỗ trợ ("camera") qua Factory & Phát sinh ngoại lệ \texttt{ArgumentException}, không trả về \texttt{null} & Bắt đúng \texttt{ArgumentException}: \textit{"Unsupported device type: camera"} & \textbf{PASS} \\
+\midrule
+\textbf{T3} & Lấy thể hiện \texttt{HomeConfiguration.Instance} hai lần & Hai biến cùng trỏ đến duy nhất một vùng nhớ (\texttt{ReferenceEquals = true}) & \texttt{ReferenceEquals(c1, c2)} trả về \texttt{True}, cùng mã băm HashCode & \textbf{PASS} \\
+\midrule
+\textbf{T4} & Thực thi thao tác mức cao \texttt{facade.GoToWork()} & Đèn tắt, quạt tắt, cửa chuyển sang trạng thái khóa (\texttt{LOCKED}) & Console in đầy đủ: \texttt{Work Light: OFF}, \texttt{Work Fan: OFF}, \texttt{Work Door: LOCKED} & \textbf{PASS} \\
+\midrule
+\textbf{T5} & Thực thi thao tác mức cao \texttt{facade.GoToSleep()} & Quạt tắt, cửa khóa, đèn bật, hiển thị mức sáng đọc từ cấu hình & Console in: \texttt{Sleep Fan: OFF}, \texttt{Sleep Door: LOCKED}, \texttt{Sleep Light: ON}, Mức sáng: 25\% & \textbf{PASS} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+\subsection{Hình ảnh minh chứng thực nghiệm và Kiểm thử}
+
+\subsubsection{1. Kịch bản minh họa hoạt động thực tế (Phần Demo)}
+Kịch bản khởi tạo thiết bị qua Factory, kiểm tra trạng thái Singleton cấu hình ngôi nhà, điều khiển riêng lẻ thiết bị và kích hoạt 2 kịch bản điều phối tập trung \texttt{GoToWork()} và \texttt{GoToSleep()} thông qua Facade:
+
+\begin{figure}[H]
+\centering
+\IfFileExists{demo.png}{%
+    \includegraphics[width=0.90\textwidth]{demo.png}%
+}{%
+    \fbox{%
+        \begin{minipage}[c][4.2cm][c]{0.88\textwidth}
+            \centering
+            \textbf{[VỊ TRÍ CHÈN ẢNH CHỤP MÀN HÌNH - PHẦN 1: MINH HỌA HOẠT ĐỘNG THỰC TẾ]}\\[0.2cm]
+            \textit{(Tự động hiển thị ảnh khi lưu file \texttt{demo.png} cùng thư mục với file \texttt{BaoCao.tex})}\\[0.25cm]
+            \small Thể hiện: Khởi tạo thiết bị qua Factory, truy xuất Singleton cấu hình và gọi Facade GoToWork/GoToSleep.
+        \end{minipage}%
+    }%
+}
+\vspace{-0.2cm}
+\caption{Kết quả thực thi kịch bản minh họa hoạt động của Factory, Singleton và Facade}
+\label{fig:demo}
+\end{figure}
+
+\subsubsection{2. Kết quả thực thi bộ kiểm thử tự động (T1 -- T5)}
+Chương trình thực thi bộ kiểm thử tự động với toàn bộ 5 ca kiểm thử đạt kết quả \textbf{PASS (5/5)}:
+
+\begin{figure}[H]
+\centering
+\IfFileExists{tests.png}{%
+    \includegraphics[width=0.90\textwidth]{tests.png}%
+}{%
+    \fbox{%
+        \begin{minipage}[c][4.8cm][c]{0.88\textwidth}
+            \centering
+            \textbf{[VỊ TRÍ CHÈN ẢNH CHỤP MÀN HÌNH - PHẦN 2: BỘ KIỂM THỬ TỰ ĐỘNG T1 - T5]}\\[0.2cm]
+            \textit{(Tự động hiển thị ảnh khi lưu file \texttt{tests.png} cùng thư mục với file \texttt{BaoCao.tex})}\\[0.25cm]
+            \small Thể hiện: Toàn bộ 5 ca kiểm thử T1 -- T5 vượt qua thành công với thông báo PASS màu xanh lá.
+        \end{minipage}%
+    }%
+}
+\vspace{-0.2cm}
+\caption{Kết quả chạy kiểm thử tự động đạt 5/5 ca kiểm thử chuẩn}
+\label{fig:tests}
+\end{figure}
+
+\vspace{-0.1cm}
+
+\section{Kết luận}
+Hệ thống \textbf{Smart Home Mini} đã triển khai trọn vẹn và chuẩn mực 3 mẫu thiết kế phần mềm kinh điển:
+\begin{itemize}[itemsep=1.0pt]
+    \item \textbf{Factory Pattern:} Tách rời triệt để việc khởi tạo đối tượng cụ thể khỏi mã nguồn Client, bảo đảm nguyên lý Dependency Inversion.
+    \item \textbf{Singleton Pattern:} Bảo đảm tính duy nhất và an toàn đa luồng cho dữ liệu cấu hình ngôi nhà với chi phí hiệu năng tối thiểu nhờ \texttt{Lazy<T>}.
+    \item \textbf{Facade Pattern:} Đem lại trải nghiệm lập trình đơn giản, tiện dụng khi điều phối hàng loạt thiết bị phần cứng thông qua các thao tác ngữ cảnh cấp cao mà không làm mất đi khả năng kiểm soát chi tiết của Client.
+\end{itemize}
+
+\end{document}
