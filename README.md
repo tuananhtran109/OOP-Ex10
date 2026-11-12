@@ -4,7 +4,7 @@
 - **Họ và tên:** Trần Tuấn Anh
 - **MSSV:** 202418834
 - **Chủ đề:** Xây dựng ứng dụng điều khiển nhà thông minh (Smart Home Mini) áp dụng 3 mẫu thiết kế: Factory, Singleton, Facade
-- **Kho lưu trữ Github:** [https://github.com/tuananhtran109/OOP-Week10](https://github.com/tuananhtran109/OOP-Week10)
+- **Kho lưu trữ Github:** [https://github.com/tuananhtran109/OOP-Ex10](https://github.com/tuananhtran109/OOP-Ex10)
 
 ---
 
@@ -27,7 +27,6 @@ Week10/
 │   │   └── SmartHomeFacade.cs       # Mẫu Facade cung cấp kịch bản GoToWork(), GoToSleep()
 │   ├── Program.cs                   # Chương trình chính (Demo thực tế & Bộ test tự động T1-T5)
 │   └── SmartHomeMini.csproj         # File cấu hình dự án .NET 10.0
-├── BaoCao.tex                       # File mã nguồn báo cáo LaTeX (biên dịch XeLaTeX)
 ├── BaoCao.pdf                       # File báo cáo PDF hoàn chỉnh
 ├── README.md                        # Tài liệu hướng dẫn & trả lời câu hỏi lý thuyết
 ├── .gitignore                       # Cấu hình bỏ qua các file build tạm
@@ -49,10 +48,6 @@ dotnet build
 dotnet run
 ```
 
-### Lệnh biên dịch báo cáo LaTeX sang PDF:
-```bash
-xelatex -interaction=nonstopmode BaoCao.tex
-```
 
 ---
 

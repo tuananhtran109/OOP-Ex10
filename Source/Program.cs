@@ -22,7 +22,7 @@ public class Program
     public static void Main(string[] args)
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
-        PrintHeader();
+      
 
         // 1. Chạy kịch bản minh họa chức năng thực tế
         RunDemonstration();
@@ -38,15 +38,7 @@ public class Program
     /// <summary>
     /// In tiêu đề thông tin sinh viên và đề tài bài lab.
     /// </summary>
-    private static void PrintHeader()
-    {
-        Console.WriteLine("========================================================");
-        Console.WriteLine("   BÀI THỰC HÀNH 10 - OOP: DESIGN PATTERNS");
-        Console.WriteLine("   Chủ đề: Smart Home Mini");
-        Console.WriteLine("   MSSV: 202418834");
-        Console.WriteLine("   Họ và tên: Trần Tuấn Anh");
-        Console.WriteLine("========================================================\n");
-    }
+
 
     /// <summary>
     /// Minh họa tương tác thông qua Factory, Singleton và Facade theo kịch bản sử dụng.
